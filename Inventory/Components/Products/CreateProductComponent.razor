@@ -1,0 +1,55 @@
+﻿@using Entities
+@using Business
+@inject NavigationManager navManager
+
+<div>
+    <EditForm Model="p">
+        <div class="form-group">
+            <label>Referencia:</label>
+            <InputText @bind-Value="p.ProductId" class="form-control" /> <!--Construyendo la asociacion del formulario-->
+        </div>
+        <div class="form-group">
+            <label>Nombre del producto:</label>
+            <InputText @bind-Value="p.Name" class="form-control" /> <!--Construyendo la asociacion del formulario-->
+        </div>
+        <div class="form-group">
+            <label>Descripcion:</label>
+            <InputText @bind-Value="p.Description" class="form-control" /> <!--Construyendo la asociacion del formulario-->
+        </div>
+
+        <div>
+            <div class="form-group" >
+                <label>Categoria</label>
+                <InputSelect @bind-Value ="p.CategoryId" class="form-control">
+                    @foreach(var c in categories)
+                    {
+                        <option value="@c.CategoryId">@c.CategoryName</option>
+                    }
+                </InputSelect>
+            </div>
+        </div>
+        <input type="button" value="Guardar producto" @onclick="SaveProduct"/>
+    </EditForm>
+</div>
+
+@code {
+    ProductEntity p = new ProductEntity();
+    IEnumerable<CategoryEntity> categories;
+
+    protected override async Task OnInitializedAsync()
+    {
+        using(B_Category services = new B_Category())
+        {
+            categories = services.FindAllItem();
+        }
+    }
+
+    private void SaveProduct()
+    {
+        using (B_Product services = new B_Product())
+        {
+            services.AddItem(p);
+            navManager.NavigateTo("product/list");
+        }
+    }
+}
