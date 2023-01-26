@@ -8,7 +8,7 @@ using System.Text;
 
 namespace Business
 {
-    public class B_Warehouse : ICrud<WarehouseEntity>
+    public class B_Warehouse : ICrud<WarehouseEntity>,IDisposable
     {
         public void AddItem(WarehouseEntity t)
         {
@@ -17,6 +17,11 @@ namespace Business
                 db.TbWarehouse.Add(t);
                 db.SaveChanges();
             }
+        }
+
+        public void Dispose()
+        {
+            GC.SuppressFinalize(this);
         }
 
         public IEnumerable<WarehouseEntity> FindAllItem()

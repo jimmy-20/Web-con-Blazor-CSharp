@@ -1,0 +1,129 @@
+﻿@using Entities
+@using Business
+
+<div class="form-group">
+    <select class="form-control" @onchange="OnChangedWarehouse">
+        <option value="">Selecccione una bodega ...</option>
+        @foreach (WarehouseEntity w in warehouses)
+        {
+            <option value="@w.WarehouseId">@w.Name</option>
+        }
+    </select>
+</div>
+
+<hr />
+
+<EditForm Model="transaction">
+    <div class="form-group">
+        <InputSelect class="form-control" @bind-Value="transaction.StorageId">
+            <option value="">Selecccione un producto ...</option>
+            @foreach (StorageEntity s in storages)
+            {
+                <option value="@s.StorageId">@s.Product.Name</option>
+            }
+        </InputSelect>
+    </div>
+
+    <div class="form-group">
+        <label>Cantidad: </label>
+        <InputNumber class="form-control" @bind-Value="transaction.Quantity"/>
+    </div>
+
+    <div >
+        <label>Es una entrada?</label>
+        <InputCheckbox class="custom-checkbox" @bind-Value="transaction.isInput"/>
+    </div>
+
+    <input type="button" value="@buttonValue" @onclick="SaveTransaction"/>
+
+    <div class="text-center h4">
+        @mensaje
+    </div>
+    
+</EditForm>
+
+@code {
+    TransactionEntity transaction = new TransactionEntity();
+    ProductEntity product = new ProductEntity();
+    StorageEntity storage = new StorageEntity();
+
+    IEnumerable<WarehouseEntity> warehouses;
+    IEnumerable<StorageEntity> storages;
+
+    string buttonValue => transaction.isInput ? "Registrar entrada" : "Registrar salida";
+    string mensaje = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        using (B_Warehouse services = new B_Warehouse())
+        {
+            warehouses = services.FindAllItem();
+        }
+
+        using (B_Storage services = new B_Storage())
+        {
+            storages = services.FindAllItemByWarehouse("");
+        }
+    }
+
+    private void OnChangedWarehouse(ChangeEventArgs e)
+    {
+        string idWarehouse = e.Value.ToString();
+
+        using (B_Storage services = new B_Storage())
+        {
+            storages = services.FindAllItemByWarehouse(idWarehouse);
+        }
+    }
+
+    private void SaveTransaction()
+    {
+        storage = storages.LastOrDefault(s => s.StorageId == transaction.StorageId);
+        product = storage.Product;
+
+        if (transaction.isInput)
+        {
+            storage.Quantity += transaction.Quantity;
+            product.TotalQuantity += transaction.Quantity;
+        }
+        else
+        {
+            if (!IsBiggerThanZero(transaction.Quantity, storage.Quantity))
+            {
+                mensaje = "No existe la cantidad suficiente en bodega";
+                return;
+            }
+
+            storage.Quantity -= transaction.Quantity;
+            product.TotalQuantity -= transaction.Quantity;
+        }
+
+        using (B_Product services = new B_Product())
+        {
+            services.UpdateItem(product);
+        }
+
+        using (B_Storage services = new B_Storage())
+        {
+            services.UpdateItem(storage);
+        }
+
+        using(B_Transaction services = new B_Transaction())
+        {
+            transaction.TransactionId = Guid.NewGuid().ToString();
+            services.AddItem(transaction);
+        }
+
+        mensaje = $"Se ha actualizado el producto {product.Name} en Bodega";
+    }
+
+    private bool IsBiggerThanZero(int quantity, int storageQuantity)
+    {
+        if (storageQuantity> quantity)
+        {
+            return true;
+        }
+
+        return false;
+    }
+}

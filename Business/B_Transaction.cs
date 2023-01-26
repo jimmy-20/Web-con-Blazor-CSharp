@@ -8,7 +8,7 @@ using Business.Intefaces;
 
 namespace Business
 {
-    public class B_Transaction : ICrud<TransactionEntity>
+    public class B_Transaction : ICrud<TransactionEntity>, IDisposable
     {
         public void AddItem(TransactionEntity t)
         {
@@ -17,6 +17,11 @@ namespace Business
                 db.TbTransaction.Add(t);
                 db.SaveChanges();
             }
+        }
+
+        public void Dispose()
+        {
+            GC.SuppressFinalize(this);
         }
 
         public IEnumerable<TransactionEntity> FindAllItem()

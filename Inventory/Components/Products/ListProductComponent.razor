@@ -4,10 +4,10 @@
 <hr />
 <select class="form-control" @onchange="CategoryChanged">
     <option value="n">Seleccione una categoria</option>
-    @foreach(var c in categories)
-            {
-                <option value="@c.CategoryId">@c.CategoryName</option>
-            }
+    @foreach (var c in categories)
+    {
+        <option value="@c.CategoryId">@c.CategoryName</option>
+    }
 </select>
 <table class="table table-hover table-bordered">
     <thead>
@@ -21,17 +21,17 @@
         </tr>
     </thead>
     <tbody>
-        @foreach(ProductEntity p in tempProducts)
-            {
-        <tr>
-            <td>@p.ProductId</td>
-            <td>@p.Name</td>
-            <td>@p.Description</td>
-            <td>@p.CategoryId</td>
-            <td>@p.TotalQuantity</td>
-            <td><a href="/product/update/@p.ProductId">Actualizar</a></td>
-        </tr>
-            }
+        @foreach (ProductEntity p in tempProducts)
+        {
+            <tr>
+                <td>@p.ProductId</td>
+                <td>@p.Name</td>
+                <td>@p.Description</td>
+                <td>@GetCategoryName(p.CategoryId)</td>
+                <td>@p.TotalQuantity</td>
+                <td><a href="/product/update/@p.ProductId">Actualizar</a></td>
+            </tr>
+        }
     </tbody>
 </table>
 
@@ -44,13 +44,13 @@
 
     protected override void OnInitialized()
     {
-        using(B_Product services = new B_Product())
+        using (B_Product services = new B_Product())
         {
             products = services.FindAllItem();
             tempProducts = products;
         }
 
-        using(B_Category services = new B_Category())
+        using (B_Category services = new B_Category())
         {
             categories = services.FindAllItem();
         }
@@ -63,11 +63,20 @@
         if (id != "n")
         {
             tempProducts = products.Where(p => p.CategoryId == e.Value.ToString());
-
         }
         else
         {
             tempProducts = products;
         }
+    }
+
+    private string GetCategoryName(string idCategory)
+    {
+        if (string.IsNullOrEmpty(idCategory))
+        {
+            return "NONE";
+        }
+
+        return categories.Where(c => c.CategoryId == idCategory).First().CategoryName;
     }
 }

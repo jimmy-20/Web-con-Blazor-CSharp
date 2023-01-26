@@ -1,0 +1,78 @@
+﻿@using Entities
+@using Business
+<EditForm Model="@storage">
+    <div class="form form-group">
+        <label>Bodega</label>
+        <InputSelect @bind-Value="storage.WareHouseId" class ="form-control">
+            <option value="">-- Seleccione una bodega</option>
+            @foreach(WarehouseEntity w in warehouses)
+                    {
+                        <option value="@w.WarehouseId">@w.Name</option>
+                    }
+        </InputSelect>
+    </div>
+
+    <div class="form form-group">
+        <label>Producto</label>
+        <InputSelect @bind-Value="storage.ProductId" class="form-control">
+            <option value="">-- Selecione un producto</option>
+            @foreach(ProductEntity p in products)
+                    {
+                        <option value="@p.ProductId">@p.Name</option>
+                    }
+        </InputSelect>
+    </div>
+
+    <div class="form form-group">
+        <input type="button" class="btn-dark" value="Agregar producto almacenado" @onclick="@SaveStorage"/>
+    </div>
+    <strong>@mensaje</strong>
+</EditForm>
+
+
+
+@code {
+    StorageEntity storage = new StorageEntity();
+    private string mensaje = "";
+
+    IEnumerable<ProductEntity> products;
+    IEnumerable<WarehouseEntity> warehouses;
+
+    protected override void OnInitialized()
+    {
+        using (B_Product services = new B_Product())
+        {
+            products = services.FindAllItem();
+        }
+
+        using (B_Warehouse services = new B_Warehouse())
+        {
+            warehouses = services.FindAllItem();
+        }
+    }
+
+    private void SaveStorage()
+    {
+        if (string.IsNullOrEmpty(storage.ProductId) || string.IsNullOrEmpty(storage.WareHouseId))
+        {
+            mensaje = "Seleccione un producto y su respectiva bodega";
+            return;
+        }
+
+        using (B_Storage services = new B_Storage())
+        {
+            storage.StorageId = $"{storage.WareHouseId}-{storage.ProductId}";
+            if (services.IsExistsProductStorage(storage))
+            {
+                mensaje = "El producto ya esta almacenado";
+            }
+            else
+            {
+                storage.LastUpdate = DateTime.Now;
+                services.AddItem(storage);
+                mensaje = "El producto se almaceno correctamente";
+            }
+        }
+    }
+
+}
